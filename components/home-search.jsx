@@ -5,6 +5,7 @@ import { Camera, Upload } from "lucide-react";
 import { Button } from "./ui/button";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 const HomeSearch = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -12,9 +13,25 @@ const HomeSearch = () => {
   const [imagePreview, setImagePreview] = useState("");
   const [searchImage, setSearchImage] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const router=useRouter()
 
-  const handleTextSubmit = () => {};
-  const handleImageSearch = () => {};
+  const handleTextSubmit =  async (e) => {
+    e.preventDefault();
+    if(!searchTerm.trim())
+    {
+      toast.error("Please upload an image first")
+      return
+    }
+    router.push(`/cars?search=${encodeURIComponent(searchTerm)}`)
+  };
+  const handleImageSearch = async (e) => {
+    e.preventDefault();
+    if(!searchImage)
+    {
+      toast.error("Please upload an image first")
+      return
+    }
+  };
 
   const onDrop = useCallback((acceptedFiles) => {
     const file=acceptedFiles[0];
@@ -22,9 +39,22 @@ const HomeSearch = () => {
       if(file.size>5*1024*1024)
       {
         toast.error("Image size must be less than 5MB")
+        return
       }
       setIsUploading(true);
       setSearchImage(file);
+      const reader=new FileReader();
+      reader.onloadend=()=>{
+        setImagePreview(reader.result);
+        setIsUploading(false);
+        toast.success("Image uploaded sucessfully");
+      };
+      reader.onerror=()=>{
+        setIsUploading(false);
+        toast.error("Failed to read the image");
+      }
+
+      reader.readAsDataURL(file);
     }
   }, []);
 
@@ -166,12 +196,10 @@ const HomeSearch = () => {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={isUploading || isProcessing}
+                disabled={isUploading }
               >
                 {isUploading
                   ? "Uploading..."
-                  : isProcessing
-                  ? "Analyzing image..."
                   : "Search with this Image"}
               </Button>
             )}
