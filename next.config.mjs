@@ -18,6 +18,16 @@
 // export default nextConfig;
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    experimental:{
+        serverComponentsHmrCache:false,
+    },
+    images:{
+        remotePatterns:[
+            {protocol:"https",
+             hostname:"jhicrhaffrmagujptkqd.supabase.co"
+            }
+        ]
+    },
     async headers() {
         return [
             {
