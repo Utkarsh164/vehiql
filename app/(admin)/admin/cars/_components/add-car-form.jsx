@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+//import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -19,15 +20,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox"
+import { Checkbox } from "@/components/ui/checkbox";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
-import { Upload } from "lucide-react";
+import { Loader2, Upload, X } from "lucide-react";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { addCar } from "@/actions/cars";
+import { useFetch } from "@/hooks/use-fetch";
 
+
+//const router = useRouter();
 const fuelType = ["Petrol", "Diesel", "Electric", "Hybrid", "Plug-in Hybrid"];
 const transmissions = ["Automatic", "Manual", "Semi-Automatic"];
 const bodyType = [
@@ -43,13 +49,14 @@ const carStatuses = ["AVAILABLE", "UNAVAILABLE", "SOLD"];
 
 const AddCarForm = () => {
   const [activeTab, setActiveTab] = useState("manual");
-  const [uploadedImages,setUploadedImages]=useState([]);
-  const [imageError,setImageError]=useState("");
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const [imageError, setImageError] = useState("");
 
   const carFormSchema = z.object({
     make: z.string().min(1, "Make is required"),
     model: z.string().min(1, "Model is required"),
     year: z.string().refine((val) => {
+      const year = Number(val);
       return (
         !isNaN(year) && year >= 1900 && year <= new Date().getFullYear() + 1
       );
@@ -60,7 +67,7 @@ const AddCarForm = () => {
     fuelType: z.string().min(1, "Fuel Type is required"),
     transmission: z.string().min(1, "Transmission is required"),
     bodyType: z.string().min(1, "Body Type is required"),
-    seat: z.string().optional(),
+    seats: z.string().optional(),
     description: z
       .string()
       .min(10, "Description must be at least 10 characters"),
@@ -86,64 +93,85 @@ const AddCarForm = () => {
       fuelType: "",
       transmission: "",
       bodyType: "",
-      seat: "",
+      seats: "",
       description: "",
       status: "",
-      featured: "",
+      featured: false,
     },
   });
+
+  const {
+    data: addCarResult,
+    loading: addCarLoading,
+    fn: addCarFn,
+  } = useFetch(addCar);
+
+
+  useEffect(()=>{
+    if(addCarResult?.success){
+      toast.success("Car added successfully");
+      router.push("/admin/cars");
+    }
+  },[addCarResult,addCarLoading])
+
+
+
+
   const onSubmit = async (data) => {
-    if(uploadedImages.length===0){
+    if (uploadedImages.length === 0) {
       setImageError("please upload at least one image");
       return;
     }
+    console.log(data,uploadedImages)
+    const carData = {
+      ...data,
+      year: parseInt(data.year),
+      price: parseFloat(data.price),
+      mileage: parseInt(data.mileage),
+      seats: data.seats ? parseInt(data.seats) : null,
+    };
+    await addCarFn({ carData, images: uploadedImages });
   };
-
-
-
-
+  const removeImage = (index) => {
+    setUploadedImages((prev) => prev.filter((_, i) => i !== index));
+  };
   const onMultiImagesDrop = (acceptedFiles) => {
-    const validFiles=acceptedFiles.filter((file)=>{
-      if(file.size>5*1024*1024){
+    const validFiles = acceptedFiles.filter((file) => {
+      if (file.size > 5 * 1024 * 1024) {
         toast.error(`${file.name} exceeds 5MB limit and will be skipped`);
         return false;
       }
-      return true
+      return true;
     });
-    if(validFiles.length===0) return;
-    const newImages=[]
-    validFiles.forEach((file)=>{
-       const reader=new FileReader();
-            reader.onload=(e)=>{
-              newImages.push(e.target.result)
-              if(newImages.length===validFiles.length){
+    if (validFiles.length === 0) return;
+    const newImages = [];
+    validFiles.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        newImages.push(e.target.result);
+        if (newImages.length === validFiles.length) {
+          setUploadedImages((prev) => [...prev, ...newImages]);
 
-                setUploadedImages((prev)=>{[...prev,...newImages]});
-                setImageError("");
-                toast.success(`Successfully uploaded ${validFiles.length} images`);
-              }
-              
-            };
-          
-      
-            reader.readAsDataURL(file);
-    })
-  }
+          setImageError("");
+          toast.success(`Successfully uploaded ${validFiles.length} images`);
+        }
+      };
 
+      reader.readAsDataURL(file);
+    });
+  };
 
-  const { getRootProps:getMultipleImageRootProps, getInputProps:getMultipleImageInputProps } =
-  useDropzone({
-    onDrop : onMultiImagesDrop,
+  const {
+    getRootProps: getMultipleImageRootProps,
+    getInputProps: getMultipleImageInputProps,
+  } = useDropzone({
+    onDrop: onMultiImagesDrop,
     accept: {
       "image/*": [".jpeg", ".jpg", ".png"],
     },
     multiple: true,
   });
 
-
-
-
-  
   return (
     <div>
       <Tabs
@@ -217,7 +245,7 @@ const AddCarForm = () => {
                     <Input
                       id="price"
                       {...register("price")}
-                      placeholder="e.g. 2022"
+                      placeholder="e.g. 1000000"
                       className={errors.price ? "border-red-500" : ""}
                     />
                     {errors.price && (
@@ -346,9 +374,9 @@ const AddCarForm = () => {
                       </SelectContent>
                     </Select>
 
-                    {errors.transmission && (
+                    {errors.bodyType && (
                       <p className="text-xs text-red-500">
-                        {errors.transmission.message}
+                        {errors.bodyType.message}
                       </p>
                     )}
                   </div>
@@ -390,79 +418,122 @@ const AddCarForm = () => {
                   </div>
                 </div>
 
-
-
                 <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description">Description</Label>
 
-                    <Textarea
+                  <Textarea
                     id="description"
                     {...register("description")}
                     placeholder="Enter detailed description of the car..."
                     className={`min-h-32 ${
-                      errors.description?"border-red-500":""
+                      errors.description ? "border-red-500" : ""
                     }`}
-                    />
+                  />
 
-                    {errors.description && (
-                      <p className="text-xs text-red-500">
-                        {errors.description.message}
-                      </p>
-                    )}
-                  </div>
+                  {errors.description && (
+                    <p className="text-xs text-red-500">
+                      {errors.description.message}
+                    </p>
+                  )}
+                </div>
 
-                  <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4">
+                <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4">
                   <Checkbox
-                  id="featured"
-                  checked={watch("featured")}
-                  onCheckedChange={(change)=>{
-                    setValue("featured",change)
-                  }} 
+                    id="featured"
+                    checked={watch("featured")}
+                    onCheckedChange={(change) => {
+                      setValue("featured", change);
+                    }}
                   />
                   <div className="space-y-1 leading-none">
                     <Label>Feature this Car</Label>
-                    <p className="text-sm text-gray-500">Featured cars appear on the homepage</p>
-                  </div>
-                  </div>
-
-
-                  <div>
-                    <Label htmlFor="images"
-                    className={imageError?"text-red-500":""}
-                    >
-                      Images{" "}
-                      {imageError && <span className="text-red-500">*</span>}
-                    </Label>
-
-
-
-                    <div {...getMultipleImageRootProps()} className={`border-2 border-dashed rounded-lg p-6 mt-2 text-center cursor-pointer hover:bg-gray-50 transition ${
-                      imageError?"border-red-500":"border-gray-300"
-                    }`}>
-                  <input {...getMultipleImageInputProps()} />
-                  <div className="flex flex-col items-center justify-center">
-                    <Upload className="h-12 w-12 text-gray-400 mb-3" />
-                    <p className="text-sm text-gray-600">
-                       Drag & drop or click to upload multiple images
-                    </p>
-                    
-                    <p className="text-gray-500 text-xs mt-1">
-                      Supports: JPG, PNG (max 5MB)
+                    <p className="text-sm text-gray-500">
+                      Featured cars appear on the homepage
                     </p>
                   </div>
                 </div>
 
+                <div>
+                  <Label
+                    htmlFor="images"
+                    className={imageError ? "text-red-500" : ""}
+                  >
+                    Images{" "}
+                    {imageError && <span className="text-red-500">*</span>}
+                  </Label>
 
+                  <div
+                    {...getMultipleImageRootProps()}
+                    className={`border-2 border-dashed rounded-lg p-6 mt-2 text-center cursor-pointer hover:bg-gray-50 transition ${
+                      imageError ? "border-red-500" : "border-gray-300"
+                    }`}
+                  >
+                    <input {...getMultipleImageInputProps()} />
+                    <div className="flex flex-col items-center justify-center">
+                      <Upload className="h-12 w-12 text-gray-400 mb-3" />
+                      <p className="text-sm text-gray-600">
+                        Drag & drop or click to upload multiple images
+                      </p>
 
-                {imageError && (
-                  <p className="text-xs text-red-500 mt-1">{imageError}</p>
-                )}
+                      <p className="text-gray-500 text-xs mt-1">
+                        Supports: JPG, PNG (max 5MB)
+                      </p>
+                    </div>
                   </div>
 
+                  {imageError && (
+                    <p className="text-xs text-red-500 mt-1">{imageError}</p>
+                  )}
+                </div>
 
-               
+                {uploadedImages.length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="text-sm font-medium mb-2">
+                      Uploaded Images ({uploadedImages.length})
+                    </h3>
+                    <div className="grid grid-col-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                      {uploadedImages.map((image, index) => {
+                        return (
+                          <div key={index} className="relative group">
+                            <Image
+                              src={image}
+                              alt={`Car images ${index + 1}`}
+                              height={50}
+                              width={50}
+                              className="h-28 w-full object-cover rounded-md"
+                              priority
+                            />
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="destructive"
+                              className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => {
+                                removeImage(index);
+                              }}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
-
+                <Button
+                  type="submit"
+                  className="w-full md:w-auto"
+                  disabled={addCarLoading}
+                >
+                  {addCarLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin">
+                      Adding Car...
+                    </Loader2>
+                  ) : (
+                    "Add Car"
+                  )}
+                </Button>
               </form>
             </CardContent>
           </Card>
