@@ -10,6 +10,8 @@ import { db } from "@/lib/pisma";
 import { createClient } from "@/lib/superbase";
 //import { createClient } from "@supabase/supabase-js";
 import { auth } from "@clerk/nextjs/server";
+import { serializedCarsData } from "@/lib/healper";
+import { boolean, date } from "zod";
 //import { serializeCarData } from "@/lib/helpers";
 // Function to convert File to base64
 async function fileToBase64(file) {
@@ -229,5 +231,141 @@ export async function addCar({ carData, images }) {
     };
   } catch (error) {
     throw new Error("Error adding car:" + error.message);
+  }
+}
+
+export async function getCars(search="") {
+  try{
+    const {userId}=await auth()
+    if(!userId) throw new Error("unauthorized");
+    
+    const user=await db.user.findUnique({
+        where:{clerkUserId:userId},
+    })
+    if(!user)
+    {
+        throw new Error("User not found");
+    }
+    let where={};
+
+    if(search){
+      where.OR=[
+        {make:{contains:search,mode:"insensitive"}},
+        {model:{contains:search,mode:"insensitive"}},
+        {color:{contains:search,mode:"insensitive"}},
+      ]
+    }
+    const cars=await db.car.findMany({
+      where,
+        orderBy:{createdAt:"desc"},
+    });
+
+    const serializedCars=cars.map(serializedCarsData);
+    return {
+      success:true,
+      data: serializedCars
+    }
+  }
+  catch(error){
+    console.error("Error fetching cars:",error)
+    return{
+      success:false,
+      error: error.message
+    }
+  }
+}
+
+export async function deleteCar(id) {
+  try {
+    const {userId}=await auth()
+    if(!userId) throw new Error("unauthorized");
+    
+    const user=await db.user.findUnique({
+        where:{clerkUserId:userId},
+    })
+    if(!user)
+    {
+        throw new Error("User not found");
+    }
+    const car=await db.car.findUnique({
+      where:{id},
+      select:{images:true},
+    })
+    if(!car){
+      return{
+        success:false,
+        error: "Car not found"
+      }
+    }
+
+    await db.car.delete({where:{id}})
+
+    try{
+      const cookieStore = await cookies();
+      const supabase = createClient(cookieStore);
+
+      const filePath=car.images.map((imageUrl)=>{
+        const url=new URL(imageUrl);
+        const pathMatch=url.pathname.match(/\/car-images\/(.*)/);
+        return pathMatch?pathMatch[1]:null
+      }).filter(boolean)
+
+      if(filePath.length>0)
+      {
+        const{error}=await supabase.storage.from("car-images").remove(filePath);
+        if(error){
+          console.error("Error deleting images:",error);
+        }
+      }
+    }
+    catch(error){
+      console.log("Error with storage operations:",error);
+    }
+    revalidatePath("/admin/cars");
+    return{success:true}
+  } catch (error) {
+    console.log("Error with delete operations:",error);
+    return{
+      success:false,
+      error:error.message
+    }
+  }
+  
+} 
+
+export async function updateCarStatus({status,featured}){
+  try {
+    const {userId}=await auth()
+    if(!userId) throw new Error("unauthorized");
+    
+    const user=await db.user.findUnique({
+        where:{clerkUserId:userId},
+    })
+    if(!user)
+    {
+        throw new Error("User not found");
+    }
+
+    const updateData={};
+    if(status!==undefined){
+      updateData.status=status
+    }
+    if(featured!==undefined){
+      updateData.featured=featured;
+    }
+    await db.car.update({
+      where:{id},
+      data:updateData
+    })
+    revalidatePath("/admin/cars");
+    return{
+      success:true
+    }
+  } catch (error) {
+    console.log("Error updating car status",error);
+    return{
+      success:false,
+      error:error.message,
+    }
   }
 }
