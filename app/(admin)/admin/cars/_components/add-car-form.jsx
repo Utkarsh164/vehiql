@@ -606,9 +606,10 @@ const AddCarForm = () => {
                   disabled={addCarLoading}
                 >
                   {addCarLoading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin">
-                      Adding Car...
-                    </Loader2>
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                    Adding Car...
+                 </>
+                    
                   ) : (
                     "Add Car"
                   )}

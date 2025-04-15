@@ -1,6 +1,6 @@
 "use server";
 import { db } from "@/lib/pisma";
-import { auth } from "@clerk/nextjs/dist/types/server";
+import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { use } from "react";
 
@@ -8,7 +8,7 @@ export async function getDealershipInfo() {
   try {
     const { userId } = await auth();
     if (!userId) throw new Error("Unauthorized");
-    const user = await db.user.findUnque({
+    const user = await db.user.findUnique({
       where: { clerkUserId: userId },
     });
     if (!user) throw new Error("User not found");
@@ -16,7 +16,7 @@ export async function getDealershipInfo() {
       include: {
         workingHours: {
           orderBy: {
-            deyOfWeek: "asc",
+            dayOfWeek: "asc",
           },
         },
       },
@@ -99,7 +99,7 @@ export async function saveWorkingHours(workingHours) {
   try {
     const { userId } = await auth();
     if (!userId) throw new Error("Unauthorized");
-    const user = await db.user.findUnque({
+    const user = await db.user.findUnique({
       where: { clerkUserId: userId },
     });
     if (!user || user.role!=="ADMIN"){throw new Error("Unauthorized: Admin access required");}
@@ -118,6 +118,19 @@ export async function saveWorkingHours(workingHours) {
           dealershipId:dealership.id
         }
     })
+
+    // for (const hour of workingHours) {
+    //   await db.workingHour.create({
+    //     data: {
+    //       dayOfWeek: hour.dayOfWeek,
+    //       openTime: hour.openTime,
+    //       closeTime: hour.closeTime,
+    //       isOpen: hour.isOpen,
+    //       dealershipId: dealership.id,
+    //     },
+    //   });
+    // }
+
     revalidatePath("/admin/settings");
     revalidatePath("/");
     return{
@@ -132,7 +145,7 @@ export async function getUsers(){
   try {
     const { userId } = await auth();
     if (!userId) throw new Error("Unauthorized");
-    const user = await db.user.findUnque({
+    const user = await db.user.findUnique({
       where: { clerkUserId: userId },
     });
     if (!user || user.role!=="ADMIN"){throw new Error("Unauthorized: Admin access required");}
@@ -158,7 +171,7 @@ export async function updateUserRole(userId,role){
   try {
     const { userId:adminId } = await auth();
     if (!adminId) throw new Error("Unauthorized");
-    const user = await db.user.findUnque({
+    const user = await db.user.findUnique({
       where: { clerkUserId: adminId },
     });
     if (!user || user.role!=="ADMIN"){throw new Error("Unauthorized: Admin access required");}
@@ -171,6 +184,6 @@ export async function updateUserRole(userId,role){
       success:true
     }
   } catch (error) {
-    throw new Error("Error fetching users:"+error.message)
+    throw new Error("Error updating users:"+error.message)
   }
 }
