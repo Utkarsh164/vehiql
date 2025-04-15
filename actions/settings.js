@@ -108,28 +108,20 @@ export async function saveWorkingHours(workingHours) {
     if(!dealership){
         throw new Error("Dealership info not found")
     }
-    await db.workingHours.deleteMany({
-        where:{dealershipId:dealership.id},
-        data:{
-          daysToWeeks:hour.dayOfWeek,
-          openTime: hour.openTime,
-          closeTime:hour.closeTime,
-          isOpen:hour.isOpen,
-          dealershipId:dealership.id
-        }
-    })
+    await db.workingHour.deleteMany({
+        where:{dealershipId:dealership.id}})
 
-    // for (const hour of workingHours) {
-    //   await db.workingHour.create({
-    //     data: {
-    //       dayOfWeek: hour.dayOfWeek,
-    //       openTime: hour.openTime,
-    //       closeTime: hour.closeTime,
-    //       isOpen: hour.isOpen,
-    //       dealershipId: dealership.id,
-    //     },
-    //   });
-    // }
+    for (const hour of workingHours) {
+      await db.workingHour.create({
+        data: {
+          dayOfWeek: hour.dayOfWeek,
+          openTime: hour.openTime,
+          closeTime: hour.closeTime,
+          isOpen: hour.isOpen,
+          dealershipId: dealership.id,
+        },
+      });
+    }
 
     revalidatePath("/admin/settings");
     revalidatePath("/");
