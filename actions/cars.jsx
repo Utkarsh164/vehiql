@@ -73,13 +73,27 @@ export async function processCarImageWithAI(file) {
       }
 
       For confidence, provide a value between 0 and 1 representing how confident you are in your overall identification.
-      Only respond with the JSON object, nothing else.
+      Only respond with the JSON object, nothing else. If all values are null then send this {
+        "make": "",
+        "model": "",
+        "year": 0000,
+        "color": "",
+        "price": "",
+        "mileage": "",
+        "bodyType": "",
+        "fuelType": "",
+        "transmission": "",
+        "description": "",
+        "confidence": 0.0
+      }
     `;
-
+     //apne machaye changes dekh lio
     // Get response from Gemini
     const result = await model.generateContent([imagePart, prompt]);
     const response = await result.response;
+    
     const text = response.text();
+    
     const cleanedText = text.replace(/```(?:json)?\n?/g, "").trim();
 
     // Parse the JSON response
@@ -110,7 +124,7 @@ export async function processCarImageWithAI(file) {
           `AI response missing required fields: ${missingFields.join(", ")}`
         );
       }
-
+      
       // Return success response with data
       return {
         success: true,

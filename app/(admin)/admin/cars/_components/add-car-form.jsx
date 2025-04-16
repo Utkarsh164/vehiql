@@ -140,7 +140,6 @@ const AddCarForm = () => {
     error: processImageError,
   } = useFetch(processCarImageWithAI);
 
-
   const processWithAI=async()=>{
     if(!uploadedAiImage){
       toast.error("Please upload an image first")
