@@ -87,6 +87,10 @@ export async function processCarImageWithAI(file) {
         "confidence": 0.0
       }
     `;
+    console.log(prompt)
+    // if (prompt.color==="" && year==="0000") {
+    //   throw new Error("Please upload a clear car image");
+    // }
      //apne machaye changes dekh lio
     // Get response from Gemini
     const result = await model.generateContent([imagePart, prompt]);

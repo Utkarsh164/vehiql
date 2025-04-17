@@ -157,7 +157,10 @@ const AddCarForm = () => {
 
   useEffect(()=>{
     if(processImageResult?.success){
+     
       const carDetails=processImageResult.data;
+
+
       setValue("make",carDetails.make);
       setValue("model",carDetails.model);
       setValue("year",carDetails.year.toString());
