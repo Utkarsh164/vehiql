@@ -204,10 +204,10 @@ const HomeSearch = () => {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={isUploading }
+                disabled={isUploading|| isProcessing }
               >
                 {isUploading
-                  ? "Uploading..."
+                  ? "Uploading...":isProcessing?"Analyzing Image..."
                   : "Search with this Image"}
               </Button>
             )}
