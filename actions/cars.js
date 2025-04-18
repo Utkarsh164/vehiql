@@ -73,26 +73,25 @@ export async function processCarImageWithAI(file) {
       }
 
       For confidence, provide a value between 0 and 1 representing how confident you are in your overall identification.
-      Only respond with the JSON object, nothing else. If all values are null then send this {
-        "make": "",
-        "model": "",
-        "year": 0000,
-        "color": "",
-        "price": "",
-        "mileage": "",
-        "bodyType": "",
-        "fuelType": "",
-        "transmission": "",
-        "description": "",
-        "confidence": 0.0
-      }
+      Only respond with the JSON object, nothing else.
+
     `;
-    console.log(prompt)
-    // if (prompt.color==="" && year==="0000") {
-    //   throw new Error("Please upload a clear car image");
+
+    // If all values are null then send this {
+    //   "make": "",
+    //   "model": "",
+    //   "year": 0000,
+    //   "color": "",
+    //   "price": "",
+    //   "mileage": "",
+    //   "bodyType": "",
+    //   "fuelType": "",
+    //   "transmission": "",
+    //   "description": "",
+    //   "confidence": 0.0
     // }
-     //apne machaye changes dekh lio
-    // Get response from Gemini
+    
+   
     const result = await model.generateContent([imagePart, prompt]);
     const response = await result.response;
     
@@ -103,7 +102,7 @@ export async function processCarImageWithAI(file) {
     // Parse the JSON response
     try {
       const carDetails = JSON.parse(cleanedText);
-
+      //console.log(carDetails)
       // Validate the response format
       const requiredFields = [
         "make",
@@ -128,7 +127,17 @@ export async function processCarImageWithAI(file) {
           `AI response missing required fields: ${missingFields.join(", ")}`
         );
       }
+
+
+
+      if (carDetails.confidence === 0.0||carDetails.confidence === 0) {
+        throw new Error("please upload clear car image");
+      }
+
       
+
+
+
       // Return success response with data
       return {
         success: true,

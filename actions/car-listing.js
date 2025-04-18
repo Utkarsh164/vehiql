@@ -1,5 +1,6 @@
 import { db } from "@/lib/pisma";
 import { auth } from "@clerk/nextjs/server";
+import { revalidatePath } from "next/cache";
 
 export async function getCarFilters() {
   try {
@@ -7,6 +8,12 @@ export async function getCarFilters() {
       where: { status: "AVAILABLE" },
       select: { make: true },
       distinct: ["make"],
+      orderBy: { make: "asc" },
+    });
+    const bodyTypes = await db.car.findMany({
+      where: { status: "AVAILABLE" },
+      select: { bodyType: true },
+      distinct: ["bodyType"],
       orderBy: { make: "asc" },
     });
     const fuelTypes = await db.car.findMany({
@@ -17,7 +24,7 @@ export async function getCarFilters() {
     });
     const transmissions = await db.car.findMany({
       where: { status: "AVAILABLE" },
-      select: { transmition: true },
+      select: { transmission: true },
       distinct: ["transmission"],
       orderBy: { make: "asc" },
     });
@@ -113,7 +120,7 @@ export async function getCars({
         skip,
         orderBy
     });
-    wishlist=new Set();
+    let wishlist=new Set();
     if(dbUser){
         const saveCars=await db.userSavedCar.find({
             where:{userId:dbUser.id},
@@ -121,7 +128,87 @@ export async function getCars({
         })
         wishlist=new Set(saveCars.map((saved)=>saved.carId));
     }
+    const serializedCars=cars.map((car)=>serializedCarData(car, wishlist.has(car.id)));
+
+    return{
+      success:true,
+      data:serializedCars,
+      Pagination:{
+        total:totalCars,
+        page,
+        limit,
+        pages:Math.ceil(totalCars/limit),
+      }
+    }
+  } catch (error) {
+    throw new Error("Error fetching cars:"+error.message);
+  }
+}
+export async function toggleSavedCar(carId) {
+  try {
+    const {userId}=await auth();
+    if(!userId) throw new Error("Unauthorized");
+
+    const user=await db.user.findUnique({
+      where:{clerkUserId:userId},
+    })
+    if(!user) throw new Error("User not found");
+
+    const car = await db.car.findUnique({
+      where:{id:carId}
+    })
+    if(!car){
+      return{
+        success:false,
+        error:"Car not found"
+      }
+    }
+    const existingSave=await db.userSavedCar.findUnique({
+      where:{
+        userId_carId:{
+          userId:user.id,
+          carId,
+        }
+      }
+    })
+
+    if(existingSave){
+      await db.userSavedCar.delete({
+        where:{
+          userId_carId:{
+            userId:user.id,
+            carId,
+          }
+        }
+      });
+
+      revalidatePath('/saved-cars');
+      return{
+        success:true,
+        saved:false,
+        message:"Car removed from favorites"
+      }
+    }
 
 
-  } catch (error) {}
+    await db.userSavedCar.create({
+      data:{
+          userId:user.id,
+          carId,
+        }
+    });
+
+    revalidatePath('/saved-cars');
+    return{
+      success:true,
+      saved:true,
+      message:"Car added  to favorites"
+    }
+
+
+
+  } catch (error) {
+    throw new Error("Error toggling saved car:"+error.message);
+  }
+  
 }
