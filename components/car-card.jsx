@@ -1,15 +1,49 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import Image from "next/image";
-import { CarIcon, Heart } from "lucide-react";
+import { CarIcon, Heart, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useFetch } from "@/hooks/use-fetch";
+import { toggleSavedCar } from "@/actions/car-listing";
+import { useAuth } from "@clerk/clerk-react";
+import { toast } from "sonner";
 const CarCard = ({ car }) => {
   const [isSaved, setIsSaved] = useState(car.wishlisted);
   const router = useRouter();
-  const handleToggleSave = async (e) => {};
+  const { isSignedIn } = useAuth();
+  const {
+    loading: isToggling,
+    fn: toggleSavedCarFn,
+    data: toggleResult,
+    error: toggleError,
+  } = useFetch(toggleSavedCar);
+  useEffect(() => {
+    if (toggleResult?.success && toggleResult.saved !== isSaved) {
+      setIsSaved(toggleResult.saved);
+      toast.success(toggleResult.message);
+    }
+  }, [toggleResult, isSaved]);
+
+  useEffect(() => {
+    if (toggleError) {
+      toast.error("Failed to update favorites");
+    }
+  }, [toggleError]);
+
+  const handleToggleSave = async (e) => {
+    e.preventDefault();
+    if (!isSignedIn) {
+      toast.error("Please sign in to save cars");
+      router.push("/sign-in");
+      return;
+    }
+    if (isToggling) return;
+
+    await toggleSavedCarFn(car.id);
+  };
   return (
     <Card className="overflow-hidden hover:shadow-lg transition group py-0">
       <div className="relative h-50">
@@ -37,7 +71,11 @@ const CarCard = ({ car }) => {
           }`}
           onClick={handleToggleSave}
         >
-          <Heart className={isSaved ? "fill-current" : ""} size={20} />
+          {isToggling ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Heart className={isSaved ? "fill-current" : ""} size={20} />
+          )}
         </Button>
       </div>
       <CardContent className="p-4">
@@ -46,7 +84,7 @@ const CarCard = ({ car }) => {
             {car.make} {car.model}
           </h3>
           <span className="text-xl font-bold text-blue-600">
-            ${car.price.toLocaleString('en-US')}
+            ${car.price.toLocaleString("en-US")}
           </span>
         </div>
         <div className="text-gray-600 mb-2 flex item-center">
@@ -73,7 +111,8 @@ const CarCard = ({ car }) => {
             className="flex-1"
             onClick={() => {
               router.push(`/cars/${car.id}`);
-            }}>
+            }}
+          >
             View Car
           </Button>
         </div>

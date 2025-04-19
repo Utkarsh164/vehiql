@@ -1,3 +1,5 @@
+"use server"
+import { serializedCarsData } from "@/lib/healper";
 import { db } from "@/lib/pisma";
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
@@ -10,29 +12,35 @@ export async function getCarFilters() {
       distinct: ["make"],
       orderBy: { make: "asc" },
     });
+
+
+  
+
+
     const bodyTypes = await db.car.findMany({
       where: { status: "AVAILABLE" },
       select: { bodyType: true },
       distinct: ["bodyType"],
-      orderBy: { make: "asc" },
+      orderBy: { bodyType: "asc" },
     });
     const fuelTypes = await db.car.findMany({
       where: { status: "AVAILABLE" },
       select: { fuelType: true },
       distinct: ["fuelType"],
-      orderBy: { make: "asc" },
+      orderBy: { fuelType: "asc" },
     });
     const transmissions = await db.car.findMany({
       where: { status: "AVAILABLE" },
       select: { transmission: true },
       distinct: ["transmission"],
-      orderBy: { make: "asc" },
+      orderBy: { transmission: "asc" },
     });
     const priceAggregations = await db.car.aggregate({
       where: { status: "AVAILABLE" },
       _min: { price: true },
       _max: { price: true },
     });
+   
     return {
       success: true,
       data: {
@@ -122,13 +130,13 @@ export async function getCars({
     });
     let wishlist=new Set();
     if(dbUser){
-        const saveCars=await db.userSavedCar.find({
+        const saveCars=await db.userSavedCar.findMany({
             where:{userId:dbUser.id},
             select:{carId:true}
         })
         wishlist=new Set(saveCars.map((saved)=>saved.carId));
     }
-    const serializedCars=cars.map((car)=>serializedCarData(car, wishlist.has(car.id)));
+    const serializedCars=cars.map((car)=>serializedCarsData(car, wishlist.has(car.id)));
 
     return{
       success:true,
