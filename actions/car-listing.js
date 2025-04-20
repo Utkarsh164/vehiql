@@ -3,6 +3,7 @@ import { serializedCarsData } from "@/lib/healper";
 import { db } from "@/lib/pisma";
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
+import { use } from "react";
 
 export async function getCarFilters() {
   try {
@@ -219,4 +220,45 @@ export async function toggleSavedCar(carId) {
     throw new Error("Error toggling saved car:"+error.message);
   }
   
+}
+
+export async function getSavedCars(){
+  try {
+    const {userId}=await auth();
+    if(!userId){
+      return{
+        success:false,
+        error:"Unauthorized"
+      };
+    }
+    const user=await db.user.findUnique({
+      where:{clerkUserId: userId},
+    })
+    if(!user){
+      return{
+        success:false,
+        error:"User not found"
+      }
+    }
+    const savedCars=await db.userSavedCar.findMany({
+      where:{userId:use.id},
+      include:{
+        car:true,
+      },
+      orderBy:{
+        savedAt:"desc",
+      },
+    })
+    const cars= savedCars.map((saved)=>serializedCarsData(saved.car));
+    return{
+      success:true,
+      data:cars,
+    }
+  } catch (error) {
+    console.error("Error fetching saved cars:",error);
+    return{
+      success:false,
+      error:error.message
+    }
+  }
 }
