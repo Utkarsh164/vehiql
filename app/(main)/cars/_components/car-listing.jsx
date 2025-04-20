@@ -2,7 +2,7 @@
 import { getCars } from "@/actions/car-listing";
 import { useFetch } from "@/hooks/use-fetch";
 import { useSearchParams } from "next/navigation";
-//import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import CarsListingLoading from "./cars-listing-loading";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -11,7 +11,7 @@ import CarCard from "@/components/car-card";
 
 const CarListing = () => {
   const searchParams = useSearchParams();
-  //const router=useRouter();
+  const router=useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 6;
 
