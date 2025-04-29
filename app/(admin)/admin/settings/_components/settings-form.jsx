@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Badge,
   Clock,
   Loader2,
   Save,
@@ -12,6 +11,7 @@ import {
   Users,
   UserX,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useFetch } from "@/hooks/use-fetch";
 import { Label } from "@/components/ui/label";
 import {
