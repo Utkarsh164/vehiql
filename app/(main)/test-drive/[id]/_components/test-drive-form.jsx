@@ -38,7 +38,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 
-//import { parseISO, format } from "date-fns";
+import { parseISO } from "date-fns";
 
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
@@ -178,6 +178,11 @@ const TestDriveForm = ({ car, testDriveInfo }) => {
     setAvailableTimeSlots(slots);
     setValue("timeSlot", "");
   }, [selectedDate]);
+  const handleCloseConfirmation = () => {
+    setShowConfirmation(false);
+    
+    router.push(`/cars/${car.id}`);
+  };
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
       <div className="md:col-span-1">
@@ -398,6 +403,52 @@ const TestDriveForm = ({ car, testDriveInfo }) => {
           </CardContent>
         </Card>
       </div>
+      <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+        
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-green-500"/>
+              Test Drive Booked Successfully
+            </DialogTitle>
+            <DialogDescription>
+              Your test drive has been confirmed with the following details:
+            </DialogDescription>
+          </DialogHeader>
+          {bookingDetails && (
+            <div className="py-4">
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="font-medium">Car:</span>
+                  <span>
+                    {car.year} {car.make} {car.model}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">Date:</span>
+                  <span>{bookingDetails.date}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">Time Slot:</span>
+                  <span>{bookingDetails.timeSlot}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">Dealership:</span>
+                  <span>{dealership?.name || "Vehiql Motors"}</span>
+                </div>
+              </div>
+
+              <div className="mt-4 bg-blue-50 p-3 rounded text-sm text-blue-700">
+                Please arrive 10 minutes early with your driver's license.
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end">
+            <Button onClick={handleCloseConfirmation}>Done</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
