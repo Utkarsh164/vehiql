@@ -84,7 +84,7 @@ export async function getUserTestDrives() {
       throw new Error("User not found in database");
     }
 
-    const booking = await db.testDriveBooking.finndMany({
+    const booking = await db.testDriveBooking.findMany({
       where: { userId: user.id },
       include: {
         car: true,
@@ -95,13 +95,13 @@ export async function getUserTestDrives() {
       id: booking.id,
       carId: booking.carId,
       car: serializedCarsData(booking.car),
-      bookingDate: booking.bookingDate.toISOSting(),
+      bookingDate: booking.bookingDate.toISOString(),
       startTime: booking.startTime,
       endTime: booking.endTime,
       status: booking.status,
       notes: booking.notes,
-      createdAt: booking.createdAt.toISOSting(),
-      updatedAt: booking.updatedAt.toISOSting(),
+      createdAt: booking.createdAt.toISOString(),
+      updatedAt: booking.updatedAt.toISOString(),
     }));
     return{
         success:true,
