@@ -1,12 +1,20 @@
 "use server"
 import aj from "@/lib/arcjet";
-import { serializedCarsData } from "@/lib/healper";
+import { serialized } from "@/lib/healper";
 import { db } from "@/lib/pisma";
 import { request } from "@arcjet/next";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { auth } from "@clerk/nextjs/server";
 
 export async function getFeaturedCars(limit = 3) {
   try {
+    const { userId } = await auth();
+     let user = null;
+     if(userId)
+     {user = await db.user.findUnique({
+      where: { clerkUserId: userId },
+    });}
+    
     const cars = await db.car.findMany({
       where: {
         featured: true,
@@ -15,11 +23,32 @@ export async function getFeaturedCars(limit = 3) {
       take: limit,
       orderBy: { createdAt: "desc" },
     });
-    return cars.map(serializedCarsData);
+
+    return await Promise.all(cars.map(car => serialized(car, user)));
+
+
+
+
   } catch (error) {
-    throw new Error("Error fetching featured cars" + error.message);
+    throw new Error("Error fetching featured cars: " + error.message);
   }
 }
+
+// export async function getFeaturedCars(limit = 3) {
+//   try {
+//     const cars = await db.car.findMany({
+//       where: {
+//         featured: true,
+//         status: "AVAILABLE",
+//       },
+//       take: limit,
+//       orderBy: { createdAt: "desc" },
+//     });
+//     return cars.map(serializedCarsData);
+//   } catch (error) {
+//     throw new Error("Error fetching featured cars" + error.message);
+//   }
+// }
 
 
 async function fileToBase64(file) {
