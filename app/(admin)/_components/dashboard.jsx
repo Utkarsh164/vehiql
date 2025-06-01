@@ -286,12 +286,18 @@ const Dashboard = ({ initialData }) => {
                   </div>
 
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <h3 className="font-medium">Conversion Rate</h3>
+                    <h3 className="font-medium">Completion Rate</h3>
                     <div className="text-3xl font-bold text-green-600">
-                      {(testDrives.completed * 100) / testDrives.total}%
+                      {testDrives.total
+                        ? (
+                            (testDrives.completed / testDrives.total) *
+                            100
+                          ).toFixed(1)
+                        : 0}
+                      %
                     </div>
                     <p className="text-sm text-gray-600 mt-1">
-                      Test drives resulting in car purcases
+                      Test drives successfully completed
                     </p>
                   </div>
                 </div>
