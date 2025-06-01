@@ -14,7 +14,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { SignedOut } from "@clerk/nextjs";
 import { getFeaturedCars } from "@/actions/home";
+
+
+
+
+import { headers } from "next/headers";
+export const dynamic = "force-dynamic";
 export default async function Home() {
+
+  const headersList = headers(); 
 
   const featuredCars=await getFeaturedCars()
 
