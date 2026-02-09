@@ -108,33 +108,6 @@ const CarListing = () => {
     );
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
- 
   const getPaginationUrl = (pageNum) => {
     const params = new URLSearchParams(searchParams);
     params.set("page", pageNum.toString());

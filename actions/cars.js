@@ -1,18 +1,14 @@
 "use server";
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
-//import { cookies } from "next/headers";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
-//import { db } from "@/lib/prisma";
 import { db } from "@/lib/pisma";
 import { createClient } from "@/lib/superbase";
-//import { createClient } from "@supabase/supabase-js";
 import { auth } from "@clerk/nextjs/server";
 import { serializedCarsData } from "@/lib/healper";
 import { boolean, date } from "zod";
-//import { serializeCarData } from "@/lib/helpers";
 // Function to convert File to base64
 async function fileToBase64(file) {
   const bytes = await file.arrayBuffer();
@@ -76,20 +72,6 @@ export async function processCarImageWithAI(file) {
       Only respond with the JSON object, nothing else.
 
     `;
-
-    // If all values are null then send this {
-    //   "make": "",
-    //   "model": "",
-    //   "year": 0000,
-    //   "color": "",
-    //   "price": "",
-    //   "mileage": "",
-    //   "bodyType": "",
-    //   "fuelType": "",
-    //   "transmission": "",
-    //   "description": "",
-    //   "confidence": 0.0
-    // }
 
     const result = await model.generateContent([imagePart, prompt]);
     const response = await result.response;
@@ -159,12 +141,6 @@ export async function addCar({ carData, images }) {
     // Create a unique folder name for this car's images
     const carId = uuidv4();
     const folderPath = `cars/${carId}`;
-
-    // const user = await db.user.findUnique({
-    //   where: { clerkUserId: userId },
-    // });
-
-    // if (!user) throw new Error("User not found");
 
     // Initialize Supabase client for server-side operations
 

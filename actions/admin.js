@@ -158,35 +158,7 @@ export async function getDashboardData() {
     if (!user || user.role !== "ADMIN") {
       throw new Error("Unauthorized access");
     }
-    // const totalCars=await db.car.count();
-    // const availableCars=await db.car.count({ where:{status:"AVAILABLE"}});
-    // const soldCars=await db.car.count({where:{status:"SOLD"}});
-    // const unavilableCars=await db.car.count({where:{status:"UNAVAILABLE"}});
-    // const featuredCars=await db.car.count({where:{featured:true}});
-
-    // const totalTestDrives=await db.testDriveBooking.count();
-    // const pendingTestDrives=await db.testDriveBooking.count({where:{status:"PENDING"}})
-    // const confirmedTestDrives=await db.testDriveBooking.count({where:{status:"CONFIRMED"}})
-    // const completedTestDrives=await db.testDriveBooking.count({where:{status:"COMPLETED"}})
-    // const cancelledTestDrives=await db.testDriveBooking.count({where:{status:"CANCELLED"}})
-    // const noShowTestDrives=await db.testDriveBooking.count({where:{status:"NO_SHOW"}})
-
-    // const completedTestDriveCarIds=await db.testDriveBooking.findMany({
-    //   where:{status:"COMPLETED"},
-    //   select:{carId:true},
-    // })
-
-    // const soldCarsAfterTestDrive=await db.carcount({
-    //   where:{
-    //     id:{in:completedTestDriveCarIds.map((item)=>item.carId)},
-    //     status:"SOLD",
-    //   }
-    // })
-   
-    // const conversionRate=completedTestDrives>0
-    // ? (soldCarsAfterTestDrive/completedTestDrives)*100:0
-    //this was slow
-
+  
     const [cars, testDrives] = await Promise.all([
       // Get all cars with minimal fields
       db.car.findMany({

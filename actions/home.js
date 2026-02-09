@@ -34,29 +34,11 @@ export async function getFeaturedCars(limit = 3) {
   }
 }
 
-// export async function getFeaturedCars(limit = 3) {
-//   try {
-//     const cars = await db.car.findMany({
-//       where: {
-//         featured: true,
-//         status: "AVAILABLE",
-//       },
-//       take: limit,
-//       orderBy: { createdAt: "desc" },
-//     });
-//     return cars.map(serializedCarsData);
-//   } catch (error) {
-//     throw new Error("Error fetching featured cars" + error.message);
-//   }
-// }
-
-
 async function fileToBase64(file) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     return buffer.toString("base64");
   }
-
 
 export async function processImageSearch(file) {
   try {
